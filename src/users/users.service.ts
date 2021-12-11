@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm'
 import {Repository} from 'typeorm'
 import {User} from './entity/user.entity'
@@ -17,18 +17,18 @@ export class UsersService {
         return this.usersRepository.find()
     }
     findOne(id: number): Promise<User>{
-        const user = this.usersRepository.findOne(id)
+        // if (user==null) { throw new BadRequestException }
 
         // const user = users.filter(user => user.id==id)
         // if (user.length==0) {
         //     throw new NotFoundException()
         // }
         
-        return user
+        return this.getUser(id)
     }
     async create(createUserDto: CreateUserDto): Promise<any>{
         const newUser: User = await this.usersRepository.create(createUserDto)
-        await this.usersRepository.insert(newUser)
+        this.usersRepository.insert(newUser)
 
         // users.push({
         //     id: users.length, 
@@ -41,9 +41,10 @@ export class UsersService {
         // return this.usersRepository.find()
     }
     async update(id: number, updateUserDto: UpdateUserDto): Promise<any>{
-        let user: User = await this.usersRepository.findOne(id)
-        user = Object.assign(user, updateUserDto)
-        await this.usersRepository.save(user)
+        const userToBeUpdated = await this.getUser(id)
+        if (userToBeUpdated==null) { throw new BadRequestException }
+        const user = Object.assign(userToBeUpdated, updateUserDto)
+        this.usersRepository.save(user)
 
         // const idx = users.findIndex(user=>user.id==id)
         // if (idx==-1) {
@@ -54,7 +55,9 @@ export class UsersService {
         // return this.usersRepository.find()
     }
     async delete(id: number): Promise<any>{
-        await this.usersRepository.delete(id)
+        const user = await this.getUser(id)
+        if (user==null) { throw new BadRequestException }
+        this.usersRepository.delete(id)
 
         // const idx = users.findIndex(user=>user.id==id)
         // if (idx==-1) {
@@ -63,6 +66,13 @@ export class UsersService {
         // users.splice(idx, 1)
 
         // return this.usersRepository.find()
+    }
+
+    async getUser(id): Promise<any> {
+        if (id==NaN) { return null }
+        let user: User = await this.usersRepository.findOne(id)
+        if (user==null || user==undefined) { return null }
+        return user
     }
     
     getHello(): string {
