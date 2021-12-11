@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm'
 import {Repository} from 'typeorm'
-import {User} from './entities/user.entity'
+import {User} from './entity/user.entity'
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -13,46 +13,56 @@ export class UsersService {
     ){}
 
 
-    async findAll(): Promise<User[]>{
-        // 하는중...
-        return this.usersRepository
+    findAll(): Promise<User[]>{
+        return this.usersRepository.find()
     }
-    async findOne(id: number){
-        const user = users.filter(user => user.id==id)
-        if (user.length==0) {
-            throw new NotFoundException()
-        }
+    findOne(id: number): Promise<User>{
+        const user = this.usersRepository.findOne(id)
+
+        // const user = users.filter(user => user.id==id)
+        // if (user.length==0) {
+        //     throw new NotFoundException()
+        // }
         
         return user
     }
-    async create(createUserDto: CreateUserDto){
-        users.push({
-            id: users.length, 
-            user_id: createUserDto.user_id, 
-            name: createUserDto.name, 
-            number010: createUserDto.number010, 
-            password: createUserDto.password, 
-        })
+    async create(createUserDto: CreateUserDto): Promise<any>{
+        const newUser: User = await this.usersRepository.create(createUserDto)
+        await this.usersRepository.insert(newUser)
+
+        // users.push({
+        //     id: users.length, 
+        //     user_id: createUserDto.user_id, 
+        //     name: createUserDto.name, 
+        //     number010: createUserDto.number010, 
+        //     password: createUserDto.password, 
+        // })
         
-        return users
+        // return this.usersRepository.find()
     }
-    async update(id: number, updateUserDto: UpdateUserDto){
-        const idx = users.findIndex(user=>user.id==id)
-        if (idx==-1) {
-            throw new NotFoundException
-        }
-        users[idx] = Object.assign(users[idx], updateUserDto)
+    async update(id: number, updateUserDto: UpdateUserDto): Promise<any>{
+        let user: User = await this.usersRepository.findOne(id)
+        user = Object.assign(user, updateUserDto)
+        await this.usersRepository.save(user)
 
-        return users
+        // const idx = users.findIndex(user=>user.id==id)
+        // if (idx==-1) {
+        //     throw new NotFoundException
+        // }
+        // users[idx] = Object.assign(users[idx], updateUserDto)
+
+        // return this.usersRepository.find()
     }
-    async delete(id: number){
-        const idx = users.findIndex(user=>user.id==id)
-        if (idx==-1) {
-            throw new NotFoundException
-        }
-        users.splice(idx, 1)
+    async delete(id: number): Promise<any>{
+        await this.usersRepository.delete(id)
 
-        return users
+        // const idx = users.findIndex(user=>user.id==id)
+        // if (idx==-1) {
+        //     throw new NotFoundException
+        // }
+        // users.splice(idx, 1)
+
+        // return this.usersRepository.find()
     }
     
     getHello(): string {
